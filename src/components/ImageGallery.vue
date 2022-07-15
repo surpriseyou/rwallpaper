@@ -82,7 +82,9 @@ export default {
         if (windowHeight + scrollTop >= documentHeight) {
           console.log("到底了");
           dataMap.query.page++;
-          await invoke("get_images", dataMap.query);
+          const images = await invoke("get_images", dataMap.query);
+          console.log(images);
+          dataMap.images.push(...images);
         }
       });
     });
@@ -108,23 +110,27 @@ export default {
 
 <style>
 .container {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  margin-top: 20px;
-  flex-direction: row;
-  align-items: center;
+  column-count: 3;
+  column-gap: 5;
 }
 .item {
-  width: 200px;
-  height: 200px;
   margin: 10px;
   border: 1px solid #ccc;
   border-radius: 5px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
+  padding: 3px;
+  cursor: pointer;
 }
+.item img {
+  width: 90%;
+  opacity: 0.9;
+  transition: all 0.3s;
+}
+
+.item img:hover {
+  opacity: 1;
+  width: 100%;
+}
+
 .context-menu {
   background: white;
   border: 1px solid #ccc;

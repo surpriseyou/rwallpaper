@@ -1,7 +1,7 @@
 /*
  * @Author: mty
  * @Date: 2022-07-12 16:57:15
- * @LastEditTime: 2022-07-15 19:05:54
+ * @LastEditTime: 2022-07-15 20:33:36
  * @LastEditors: anonymous
  * @Description:
  * @FilePath: \rwallpaper\src-tauri\src\lib.rs
@@ -47,7 +47,7 @@ impl ToString for ImageQuery {
         if self.page > 1 {
             query.push_str(&format!("?page={}", self.page));
         }
-        if self.keyword.is_empty() {
+        if !self.keyword.is_empty() {
             let s = if query.is_empty() { "?" } else { "&" };
             query.push_str(&format!("{}q={}", s, self.keyword));
         }

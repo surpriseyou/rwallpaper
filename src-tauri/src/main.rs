@@ -27,14 +27,14 @@ fn main() {
 
 #[tauri::command]
 async fn hello() -> String {
-    let resp = reqwest::get("https://httpbin.org/get").await.unwrap();
-    let body = resp.text().await.unwrap();
-    format!("Hello, world!\n{}", body)
+    format!("Hello, world!\n")
 }
 
 #[tauri::command]
 async fn get_images(page: u8, keyword: String) -> Vec<Image> {
     let mut spider = Wallhaven::new();
+
+    // todo: use a cache to avoid querying the same page twice
     // if IMAGES.lock().unwrap().contains_key(&spider.name()) {
     //     return IMAGES.lock().unwrap()[&spider.name()].clone();
     // }
@@ -50,10 +50,15 @@ async fn get_images(page: u8, keyword: String) -> Vec<Image> {
     spider.crawl(query).await;
 
     // push to static IMAGES
-    IMAGES
-        .lock()
-        .unwrap()
-        .insert(spider.name(), spider.images.clone());
+    let mut images = IMAGES.lock().unwrap();
+    if images.contains_key(&spider.name()) {
+        images
+            .get_mut(&spider.name())
+            .unwrap()
+            .append(&mut spider.images.clone());
+    } else {
+        images.insert(spider.name().clone(), spider.images.clone());
+    }
 
     spider.images
 }

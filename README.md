@@ -1,24 +1,27 @@
 # rwallpaper
 
 ## Project setup
+
 ```
 npm install
 ```
 
 ### Compiles and hot-reloads for development
+
 ```
-npm run serve
+npm run tauri:serve
 ```
 
 ### Compiles and minifies for production
+
 ```
-npm run build
+cargo tauri build
 ```
 
-### Lints and fixes files
-```
-npm run lint
-```
+### todo list
 
-### Customize configuration
-See [Configuration Reference](https://cli.vuejs.org/config/).
+- [ ] 添加搜索过滤
+
+- [ ] 大图浏览
+
+- [ ] 本地图片浏览
