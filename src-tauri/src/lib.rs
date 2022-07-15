@@ -1,7 +1,7 @@
 /*
  * @Author: mty
  * @Date: 2022-07-12 16:57:15
- * @LastEditTime: 2022-07-14 22:11:26
+ * @LastEditTime: 2022-07-15 19:05:54
  * @LastEditors: anonymous
  * @Description:
  * @FilePath: \rwallpaper\src-tauri\src\lib.rs
@@ -19,9 +19,40 @@ use serde::Serialize;
 
 #[async_trait]
 pub trait Spider {
-    async fn crawl(&mut self);
+    async fn crawl(&mut self, query: ImageQuery);
     fn name(&self) -> String;
     fn new() -> Self;
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct ImageQuery {
+    pub page: u8,
+    pub tags: Option<Vec<String>>,
+    pub keyword: String,
+}
+
+impl ImageQuery {
+    pub fn new(page: u8, keyword: String, tags: Option<Vec<String>>) -> Self {
+        ImageQuery {
+            page,
+            tags,
+            keyword,
+        }
+    }
+}
+
+impl ToString for ImageQuery {
+    fn to_string(&self) -> String {
+        let mut query = String::new();
+        if self.page > 1 {
+            query.push_str(&format!("?page={}", self.page));
+        }
+        if self.keyword.is_empty() {
+            let s = if query.is_empty() { "?" } else { "&" };
+            query.push_str(&format!("{}q={}", s, self.keyword));
+        }
+        return query;
+    }
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -68,8 +99,10 @@ pub struct Wallhaven {
 
 #[async_trait]
 impl Spider for Wallhaven {
-    async fn crawl(&mut self) {
-        let url = "https://wallhaven.cc/toplist";
+    async fn crawl(&mut self, query: ImageQuery) {
+        let url = String::from("https://wallhaven.cc/toplist") + &query.to_string();
+
+        println!("url: {}", url);
 
         let resp = reqwest::get(url).await.unwrap().text().await.unwrap();
 

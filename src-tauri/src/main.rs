@@ -6,16 +6,21 @@
 #[macro_use]
 extern crate lazy_static;
 
-use app::{Image, Spider, Wallhaven};
-use std::collections::HashMap;
+use app::{Image, ImageQuery, Spider, Wallhaven};
+use std::{collections::HashMap, sync::Mutex};
 
 lazy_static! {
-    static ref IMAGES: HashMap<String, Vec<Image>> = HashMap::new();
+    static ref IMAGES: Mutex<HashMap<String, Vec<Image>>> = Mutex::new(HashMap::new());
 }
 
 fn main() {
     tauri::Builder::default()
-        .invoke_handler(tauri::generate_handler![hello, get_images, set_background])
+        .invoke_handler(tauri::generate_handler![
+            hello,
+            get_images,
+            set_background,
+            download_image
+        ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
@@ -28,16 +33,36 @@ async fn hello() -> String {
 }
 
 #[tauri::command]
-async fn get_images() -> Vec<Image> {
+async fn get_images(page: u8, keyword: String) -> Vec<Image> {
     let mut spider = Wallhaven::new();
-    spider.crawl().await;
+    // if IMAGES.lock().unwrap().contains_key(&spider.name()) {
+    //     return IMAGES.lock().unwrap()[&spider.name()].clone();
+    // }
 
-    for image in spider.images.iter_mut() {
-        // image.download().await.unwrap();
-        // println!("{:?}", image);
-    }
+    let query = ImageQuery {
+        keyword,
+        page,
+        tags: None,
+    };
+
+    println!("query: {query:?} crawl...");
+
+    spider.crawl(query).await;
+
+    // push to static IMAGES
+    IMAGES
+        .lock()
+        .unwrap()
+        .insert(spider.name(), spider.images.clone());
 
     spider.images
+}
+
+#[tauri::command]
+async fn download_image(source: String) -> String {
+    let mut image = Image::new("".to_string(), source);
+    image.download().await.unwrap();
+    format!("{}", image.local_path)
 }
 
 #[tauri::command]
