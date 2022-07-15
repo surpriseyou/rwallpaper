@@ -8,6 +8,7 @@ extern crate lazy_static;
 
 use app::{Image, ImageQuery, Spider, Wallhaven};
 use std::{collections::HashMap, sync::Mutex};
+use tauri::Manager;
 
 lazy_static! {
     static ref IMAGES: Mutex<HashMap<String, Vec<Image>>> = Mutex::new(HashMap::new());
@@ -17,6 +18,7 @@ fn main() {
     tauri::Builder::default()
         .invoke_handler(tauri::generate_handler![
             hello,
+            close_splashscreen,
             get_images,
             set_background,
             download_image
@@ -28,6 +30,18 @@ fn main() {
 #[tauri::command]
 async fn hello() -> String {
     format!("Hello, world!\n")
+}
+
+// Create the command:
+// This command must be async so that it doesn't run on the main thread.
+#[tauri::command]
+async fn close_splashscreen(window: tauri::Window) {
+    // Close splashscreen
+    if let Some(splashscreen) = window.get_window("splashscreen") {
+        splashscreen.close().unwrap();
+    }
+    // Show main window
+    window.get_window("main").unwrap().show().unwrap();
 }
 
 #[tauri::command]

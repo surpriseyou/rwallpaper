@@ -38,6 +38,7 @@ export default {
       images: [],
       currentImage: null,
       contextMenuShow: false,
+      loading: false,
       handleContextMenu: async (e, image) => {
         e.preventDefault();
 
@@ -71,6 +72,7 @@ export default {
     onMounted(async () => {
       const response = await invoke("get_images", dataMap.query);
       dataMap.images = response;
+      invoke("close_splashscreen");
       console.log(dataMap.images);
       window.addEventListener("scroll", async () => {
         const windowHeight =
@@ -79,12 +81,13 @@ export default {
           document.documentElement.scrollTop || document.body.scrollTop;
         const documentHeight =
           document.documentElement.scrollHeight || document.body.scrollHeight;
-        if (windowHeight + scrollTop >= documentHeight) {
-          console.log("到底了");
+        // todo: 连续滚动时，可能会出现多次触发，导致请求多次
+        if (windowHeight + scrollTop >= documentHeight && !dataMap.loading) {
+          dataMap.loading = true;
           dataMap.query.page++;
           const images = await invoke("get_images", dataMap.query);
-          console.log(images);
           dataMap.images.push(...images);
+          dataMap.loading = false;
         }
       });
     });
