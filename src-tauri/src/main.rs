@@ -64,16 +64,16 @@ async fn get_images(page: u8, keyword: String) -> Vec<Image> {
     spider.crawl(query).await;
 
     // push to static IMAGES
-    let mut images = IMAGES.lock().unwrap();
-    if images.contains_key(&spider.name()) {
-        images
-            .get_mut(&spider.name())
-            .unwrap()
-            .append(&mut spider.images.clone());
-    } else {
-        images.insert(spider.name().clone(), spider.images.clone());
-    }
-
+    // let mut images = IMAGES.lock().unwrap();
+    // if images.contains_key(&spider.name()) {
+    //     images
+    //         .get_mut(&spider.name())
+    //         .unwrap()
+    //         .append(&mut spider.images.clone());
+    // } else {
+    //     images.insert(spider.name().clone(), spider.images.clone());
+    // }
+    println!("{:?}", &spider.images);
     spider.images
 }
 
