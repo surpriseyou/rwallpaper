@@ -19,7 +19,7 @@
       @click.stop.prevent="contextMenuShow = false"
     >
       <img
-        :src="image.thumbnail"
+        v-lazy="image.thumbnail"
         alt=""
         @contextmenu="(e) => handleContextMenu(e, image)"
       />
@@ -202,7 +202,7 @@ export default {
 .container {
   column-count: 3;
   column-gap: 5;
-  margin-top: 35px;
+  margin-top: 40px;
 }
 .item {
   margin: 10px;
