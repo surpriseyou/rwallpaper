@@ -6,22 +6,23 @@
 import { onMounted, ref } from "@vue/runtime-core";
 import ImageGallery from "./components/ImageGallery.vue";
 import { invoke } from "@tauri-apps/api";
+import { appWindow } from "@tauri-apps/api/window";
+
 export default {
   name: "App",
   components: {
     ImageGallery,
   },
   setup() {
-    onMounted(() => {
+    onMounted(async () => {
       console.log("App mounted");
-      invoke("hello", { name: "World" })
-        // `invoke` returns a Promise
-        .then((response) => console.log(response));
+      await appWindow.onCloseRequested(async (event) => {
+        await appWindow.hide();
+        event.preventDefault();
+      });
     });
     const getImages = () => {
-      invoke("get_images")
-        // `invoke` returns a Promise
-        .then((response) => console.log(response));
+      invoke("get_images").then((response) => console.log(response));
     };
     const counter = ref(0);
     return {

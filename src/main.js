@@ -2,14 +2,16 @@ import { createApp } from "vue";
 import App from "./App.vue";
 import VueLazyLoad from "vue-lazyload";
 import { isRegistered, register } from "@tauri-apps/api/globalShortcut";
-import { invoke } from "@tauri-apps/api";
+// import { invoke } from "@tauri-apps/api";
+import { appWindow } from "@tauri-apps/api/window";
 
 // Register global shortcuts
 const shortcut = "CommandOrControl+Shift+Enter";
 isRegistered(shortcut).then((registered) => {
   if (!registered) {
     register("CommandOrControl+Shift+Enter", async () => {
-      await invoke("show_main_window");
+      await appWindow.center();
+      await appWindow.show();
     }).then(() => {
       console.log("Registered");
     });

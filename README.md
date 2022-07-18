@@ -20,7 +20,9 @@ cargo tauri build
 
 ### todo list
 
-- [ ] 添加搜索过滤
+- [x] 添加搜索过滤
+
+- [ ] 系统托盘
 
 - [ ] 大图浏览
 

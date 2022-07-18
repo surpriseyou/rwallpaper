@@ -18,9 +18,11 @@ lazy_static! {
 fn main() {
     let tray = SystemTray::new();
     let quit = CustomMenuItem::new("quit".to_string(), "退出");
-    let hide = CustomMenuItem::new("hide".to_string(), "Hide");
+    // let hide = CustomMenuItem::new("hide".to_string(), "Hide");
+    let randomly = CustomMenuItem::new("randomly".to_string(), "随机壁纸");
     let tray_menu = SystemTrayMenu::new()
-        .add_item(hide)
+        // .add_item(hide)
+        .add_item(randomly)
         .add_native_item(SystemTrayMenuItem::Separator)
         .add_item(quit);
 
@@ -30,6 +32,8 @@ fn main() {
             SystemTrayEvent::LeftClick { position, size, .. } => {
                 println!("left click {position:?} {size:?}");
                 let window = app.get_window("main").unwrap();
+                // window.set_always_on_top(true).unwrap();
+                window.center().unwrap();
                 window.show().unwrap();
             }
             SystemTrayEvent::RightClick { position, size, .. } => {
@@ -38,6 +42,15 @@ fn main() {
             SystemTrayEvent::MenuItemClick { id, .. } => match id.as_str() {
                 "quit" => {
                     std::process::exit(0);
+                }
+                "randomly" => {
+                    // let mut images = IMAGES.lock().unwrap();
+                    // let image = images.get_mut("wallhaven").unwrap();
+                    // let image = image.choose(&mut rand::thread_rng()).unwrap();
+                    // set_background(&image.path).unwrap();
+                    let window = app.get_window("main").unwrap();
+                    // show todo dialog
+                    tauri::api::dialog::message(Some(&window), "tips", "todo");
                 }
                 "hide" => {
                     let window = app.get_window("main").unwrap();
