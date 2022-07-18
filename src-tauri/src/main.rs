@@ -9,15 +9,49 @@ extern crate lazy_static;
 use app::{Image, ImageQuery, Spider, Wallhaven};
 use std::{collections::HashMap, sync::Mutex};
 use tauri::Manager;
+use tauri::{CustomMenuItem, SystemTray, SystemTrayEvent, SystemTrayMenu, SystemTrayMenuItem};
 
 lazy_static! {
     static ref IMAGES: Mutex<HashMap<String, Vec<Image>>> = Mutex::new(HashMap::new());
 }
 
 fn main() {
+    let tray = SystemTray::new();
+    let quit = CustomMenuItem::new("quit".to_string(), "退出");
+    let hide = CustomMenuItem::new("hide".to_string(), "Hide");
+    let tray_menu = SystemTrayMenu::new()
+        .add_item(hide)
+        .add_native_item(SystemTrayMenuItem::Separator)
+        .add_item(quit);
+
     tauri::Builder::default()
+        .system_tray(tray.with_menu(tray_menu))
+        .on_system_tray_event(|app, event| match event {
+            SystemTrayEvent::LeftClick { position, size, .. } => {
+                println!("left click {position:?} {size:?}");
+                let window = app.get_window("main").unwrap();
+                window.show().unwrap();
+            }
+            SystemTrayEvent::RightClick { position, size, .. } => {
+                println!("right click {position:?} {size:?}");
+            }
+            SystemTrayEvent::MenuItemClick { id, .. } => match id.as_str() {
+                "quit" => {
+                    std::process::exit(0);
+                }
+                "hide" => {
+                    let window = app.get_window("main").unwrap();
+                    window.hide().unwrap();
+                }
+                _ => {}
+            },
+            _ => {
+                println!("other");
+            }
+        })
         .invoke_handler(tauri::generate_handler![
             hello,
+            show_main_window,
             close_splashscreen,
             get_images,
             set_background,
@@ -30,6 +64,12 @@ fn main() {
 #[tauri::command]
 async fn hello() -> String {
     format!("Hello, world!\n")
+}
+
+#[tauri::command]
+async fn show_main_window(window: tauri::Window) {
+    let main = window.get_window("main").unwrap();
+    main.show().unwrap();
 }
 
 // Create the command:
