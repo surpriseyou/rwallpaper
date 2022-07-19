@@ -134,6 +134,7 @@ export default {
       },
       handleDownload: async () => {
         console.log("start download");
+        dataMap.contextMenuShow = false;
         const { currentImage } = dataMap;
         if (currentImage) {
           const { source } = currentImage;

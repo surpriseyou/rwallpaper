@@ -60,6 +60,7 @@ dependencies = [
  "anyhow",
  "async-trait",
  "lazy_static",
+ "rand 0.8.5",
  "reqwest",
  "scraper",
  "serde",

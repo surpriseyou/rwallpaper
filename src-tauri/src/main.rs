@@ -6,7 +6,8 @@
 #[macro_use]
 extern crate lazy_static;
 
-use app::{Image, ImageQuery, Spider, Wallhaven};
+use app::{utils, Image, ImageQuery, Spider, Wallhaven};
+use rand::Rng;
 use std::{collections::HashMap, sync::Mutex};
 use tauri::Manager;
 use tauri::{CustomMenuItem, SystemTray, SystemTrayEvent, SystemTrayMenu, SystemTrayMenuItem};
@@ -44,13 +45,36 @@ fn main() {
                     std::process::exit(0);
                 }
                 "randomly" => {
-                    // let mut images = IMAGES.lock().unwrap();
-                    // let image = images.get_mut("wallhaven").unwrap();
-                    // let image = image.choose(&mut rand::thread_rng()).unwrap();
-                    // set_background(&image.path).unwrap();
-                    let window = app.get_window("main").unwrap();
-                    // show todo dialog
-                    tauri::api::dialog::message(Some(&window), "tips", "todo");
+                    let local_images = utils::list_images();
+                    match local_images {
+                        Ok(images) => {
+                            if images.is_empty() {
+                                tauri::api::dialog::message(
+                                    Some(&app.get_window("main").unwrap()),
+                                    "提醒",
+                                    "没有可用的图片，请先下载图片！",
+                                );
+                                return;
+                            }
+                            let image = images.get(rand::thread_rng().gen_range(0..images.len()));
+                            if let Some(image) = image {
+                                utils::set_background(&image).unwrap();
+                            } else {
+                                tauri::api::dialog::message(
+                                    Some(&app.get_window("main").unwrap()),
+                                    "error",
+                                    "获取本地图片出错",
+                                );
+                            }
+                        }
+                        Err(e) => {
+                            tauri::api::dialog::message(
+                                Some(&app.get_window("main").unwrap()),
+                                "error",
+                                &format!("获取本地图片出错：{}", e),
+                            );
+                        }
+                    }
                 }
                 "hide" => {
                     let window = app.get_window("main").unwrap();
