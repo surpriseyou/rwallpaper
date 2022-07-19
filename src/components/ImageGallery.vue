@@ -5,6 +5,7 @@
       type="text"
       placeholder="请输入关键字"
       v-model="query.keyword"
+      @keyup.enter="handleQuery"
     />
     <button type="button" class="search-btn" @click="handleQuery">
       <img src="../assets/search.png" alt="../assets/image.png" />
@@ -12,17 +13,23 @@
     </button>
   </div>
   <div class="container" @scroll="handleScroll">
-    <div
-      class="item"
-      v-for="(image, index) in images"
-      :key="index"
-      @click.stop.prevent="contextMenuShow = false"
-    >
-      <img
-        v-lazy="image.thumbnail"
-        alt=""
-        @contextmenu="(e) => handleContextMenu(e, image)"
-      />
+    <div class="image-group" v-for="(group, index) in images" :key="index">
+      <div
+        class="item"
+        v-for="(image, index) in group.items"
+        :key="index"
+        @click.stop.prevent="contextMenuShow = false"
+      >
+        <img
+          v-lazy="image.thumbnail"
+          alt=""
+          @contextmenu="(e) => handleContextMenu(e, image)"
+        />
+      </div>
+
+      <div class="divider">
+        第 <strong>{{ group.page }}</strong> 页
+      </div>
     </div>
 
     <ul ref="contextMenu" class="context-menu" v-show="contextMenuShow">
@@ -140,39 +147,45 @@ export default {
       },
       handleQuery: async () => {
         dataMap.loading = true;
+        dataMap.images = [];
         const { query } = dataMap;
         query.page = 1;
         const images = await invoke("get_images", query);
-        console.log(images);
-        if (images) {
-          dataMap.images = images;
-        } else {
-          dataMap.images = [];
+        if (images && images.length > 0) {
+          dataMap.images.push({ page: 1, items: images });
         }
-        // dataMap.images = images;
+
         dataMap.loading = false;
       },
     });
 
     onMounted(async () => {
       const response = await invoke("get_images", dataMap.query);
-      dataMap.images = response;
+      dataMap.images.push({ page: 1, items: response });
+
       invoke("close_splashscreen");
-      console.log(dataMap.images);
+
       window.addEventListener("scroll", async () => {
+        if (dataMap.loading) return;
+
         const windowHeight =
           document.documentElement.clientHeight || document.body.clientHeight;
         const scrollTop =
           document.documentElement.scrollTop || document.body.scrollTop;
         const documentHeight =
           document.documentElement.scrollHeight || document.body.scrollHeight;
-        // todo: 连续滚动时，可能会出现多次触发，导致请求多次
-        if (windowHeight + scrollTop >= documentHeight && !dataMap.loading) {
+
+        if (windowHeight + scrollTop >= documentHeight) {
           dataMap.loading = true;
-          dataMap.query.page++;
+          if (dataMap.images.length > 0) {
+            dataMap.query.page++;
+          } else {
+            dataMap.query.page = 1;
+          }
+
           const images = await invoke("get_images", dataMap.query);
-          if (images) {
-            dataMap.images.push(...images);
+          if (images && images.length > 0) {
+            dataMap.images.push({ page: dataMap.query.page, items: images });
           }
           dataMap.loading = false;
         }
@@ -200,9 +213,26 @@ export default {
 
 <style>
 .container {
-  column-count: 3;
-  column-gap: 5;
+  /* column-count: 3;
+  column-gap: 5; */
   margin-top: 40px;
+}
+.image-group {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: repeat(3, 1fr);
+  position: relative;
+}
+
+.divider {
+  width: 100%;
+  height: 20px;
+  background-color: whitesmoke;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: absolute;
+  bottom: -10px;
 }
 .item {
   margin: 10px;
