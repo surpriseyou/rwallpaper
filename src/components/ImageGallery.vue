@@ -1,5 +1,8 @@
 <template>
   <div class="query-container">
+    <select name="source" class="select-source">
+      <option class="source-option" value="wallhaven">wallhaven</option>
+    </select>
     <input
       class="input-text"
       type="text"
@@ -120,6 +123,8 @@ export default {
       currentImage: null,
       contextMenuShow: false,
       loading: false,
+      canLoadMore: true, // 是否可以加载更多, 如果一次获取图片少于“pageSize”张, 就不能加载更多, 反之可以加载更多
+      pageSize: 24, // 每页显示的图片数量
       handleContextMenu: async (e, image) => {
         e.preventDefault();
 
@@ -156,6 +161,12 @@ export default {
           dataMap.images.push({ page: 1, items: images });
         }
 
+        if (!images || images.length < dataMap.pageSize) {
+          dataMap.canLoadMore = false;
+        } else {
+          dataMap.canLoadMore = true;
+        }
+
         dataMap.loading = false;
       },
     });
@@ -167,7 +178,7 @@ export default {
       invoke("close_splashscreen");
 
       window.addEventListener("scroll", async () => {
-        if (dataMap.loading) return;
+        if (dataMap.loading && !dataMap.canLoadMore) return;
 
         const windowHeight =
           document.documentElement.clientHeight || document.body.clientHeight;
@@ -188,6 +199,12 @@ export default {
           if (images && images.length > 0) {
             dataMap.images.push({ page: dataMap.query.page, items: images });
           }
+          if (!images || images.length < dataMap.pageSize) {
+            dataMap.canLoadMore = false;
+          } else {
+            dataMap.canLoadMore = true;
+          }
+          console.log(dataMap.canLoadMore);
           dataMap.loading = false;
         }
       });
@@ -243,14 +260,14 @@ export default {
   cursor: pointer;
 }
 .item img {
-  width: 90%;
+  width: 100%;
   opacity: 0.9;
   transition: all 0.3s;
 }
 
 .item img:hover {
   opacity: 1;
-  width: 100%;
+  transform: translateY(-3px);
 }
 
 .context-menu {
@@ -284,6 +301,24 @@ export default {
   background: white;
   padding: 3px;
 }
+
+.select-source {
+  outline: none;
+  border: none;
+  width: fit-content;
+  min-width: 100px;
+  padding: 3px;
+  appearance: none;
+}
+
+.source-option {
+  border-radius: 0;
+  border-bottom: 1px solid #ccc;
+  padding: 3px;
+  cursor: pointer;
+  height: 24px;
+}
+
 .input-text {
   width: 200px;
   height: 30px;

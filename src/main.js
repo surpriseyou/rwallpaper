@@ -9,13 +9,14 @@ import { appWindow } from "@tauri-apps/api/window";
 const shortcut = "CommandOrControl+Shift+Enter";
 isRegistered(shortcut).then((registered) => {
   if (!registered) {
-    register("CommandOrControl+Shift+Enter", async () => {
-      await appWindow.center();
-      await appWindow.show();
-    }).then(() => {
-      console.log("Registered");
-    });
+    console.log(`Registering global shortcut: ${shortcut}`);
   }
+});
+register("CommandOrControl+Shift+Enter", async () => {
+  await appWindow.center();
+  await appWindow.show();
+}).then(() => {
+  console.log("Registered");
 });
 
 const loadingImage = require("./assets/loading.png");
