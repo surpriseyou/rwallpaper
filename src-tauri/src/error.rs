@@ -1,10 +1,10 @@
 /*
  * @Author: mty
  * @Date: 2022-07-12 18:41:44
- * @LastEditTime: 2022-07-14 11:46:22
+ * @LastEditTime: 2022-07-23 11:31:06
  * @LastEditors: anonymous
  * @Description:
- * @FilePath: \tauri-app\src-tauri\src\error.rs
+ * @FilePath: \rwallpaper\src-tauri\src\error.rs
  * no code no bug.
  */
 use thiserror::Error;
@@ -15,6 +15,10 @@ pub enum WallPapaerError {
     InvalidOperate(String),
     #[error("image path: {0} does not exists!")]
     FileNotExists(String),
+    #[error("unknown image source: {0}")]
+    UnknownImageSource(String),
+    #[error("does not have any image source to crawl.")]
+    DoesNotHaveAnyImageSource,
 }
 
 // we must manually implement serde::Serialize

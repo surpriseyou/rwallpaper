@@ -3,8 +3,9 @@
   "build": {
     "beforeBuildCommand": "yarn build",
     "beforeDevCommand": "yarn serve",
-    "devPath": "../dist",
-    "distDir": "../dist"
+    "devPath": "http://localhost:8080/",
+    "distDir": "../dist",
+    "withGlobalTauri": true
   },
   "package": {
     "productName": "rwallpaper",

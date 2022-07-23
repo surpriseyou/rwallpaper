@@ -1,42 +1,42 @@
 /*
  * @Author: mty
  * @Date: 2022-07-12 16:57:15
- * @LastEditTime: 2022-07-15 20:33:36
+ * @LastEditTime: 2022-07-23 14:38:00
  * @LastEditors: anonymous
  * @Description:
  * @FilePath: \rwallpaper\src-tauri\src\lib.rs
  * no code no bug.
  */
+#[macro_use]
+extern crate lazy_static;
 pub mod error;
+pub mod spiders;
 pub mod utils;
 
+use anyhow::Ok;
 use anyhow::Result;
-use async_trait::async_trait;
 pub use error::WallPapaerError;
-use scraper::{Html, Selector};
 use serde::Deserialize;
 use serde::Serialize;
+use std::collections::HashMap;
 
-#[async_trait]
-pub trait Spider {
-    async fn crawl(&mut self, query: ImageQuery);
-    fn name(&self) -> String;
-    fn new() -> Self;
-}
+use spiders::Spider;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct ImageQuery {
     pub page: u8,
     pub tags: Option<Vec<String>>,
     pub keyword: String,
+    pub source: String,
 }
 
 impl ImageQuery {
-    pub fn new(page: u8, keyword: String, tags: Option<Vec<String>>) -> Self {
+    pub fn new(source: String, page: u8, keyword: String, tags: Option<Vec<String>>) -> Self {
         ImageQuery {
             page,
             tags,
             keyword,
+            source,
         }
     }
 }
@@ -51,7 +51,7 @@ impl ToString for ImageQuery {
             let s = if query.is_empty() { "?" } else { "&" };
             query.push_str(&format!("{}q={}", s, self.keyword));
         }
-        return query;
+        query
     }
 }
 
@@ -76,10 +76,10 @@ impl Image {
             return Err(WallPapaerError::InvalidOperate("source is empty".to_owned()).into());
         }
         // get file name
-        let file_name = self.source.split("/").last().unwrap();
+        let file_name = self.source.split('/').last().unwrap();
 
         // download image
-        let local_path = utils::download(&self.source, &file_name).await;
+        let local_path = utils::download(&self.source, file_name).await;
 
         self.local_path = local_path;
 
@@ -93,47 +93,31 @@ impl Image {
     }
 }
 
-pub struct Wallhaven {
-    pub images: Vec<Image>,
+lazy_static! {
+    static ref SPIDERS: HashMap<String, Box<dyn Spider + Sync>> = {
+        let mut map = HashMap::new();
+        let spiders = spiders::get_all_spiders().unwrap();
+        for spider in spiders {
+            map.insert(spider.name(), spider);
+        }
+        map
+    };
 }
 
-#[async_trait]
-impl Spider for Wallhaven {
-    async fn crawl(&mut self, query: ImageQuery) {
-        let url = String::from("https://wallhaven.cc/toplist") + &query.to_string();
+pub async fn get_images(query: &ImageQuery) -> Result<Vec<Image>> {
+    let spider = SPIDERS.get(&query.source);
 
-        println!("url: {}", url);
-
-        let resp = reqwest::get(url).await.unwrap().text().await.unwrap();
-
-        let document = Html::parse_document(&resp);
-
-        let selector = Selector::parse("#thumbs .thumb-listing-page img").unwrap();
-
-        for element in document.select(&selector) {
-            if let Some(ss) = element.value().attr("data-src") {
-                let thumbnail = ss.to_owned();
-                // thumbnial https://th.wallhaven.cc/small/y8/y8pr1d.jpg
-                // source https://w.wallhaven.cc/full/y8/wallhaven-y8pr1d.jpg
-                // from thumbnail convert to source
-                // get file name
-                let file_name = thumbnail.split("/").last().unwrap();
-                let source = thumbnail
-                    .clone()
-                    .replace("th.wallhaven.cc", "w.wallhaven.cc")
-                    .replace("small", "full")
-                    .replace(file_name, format!("wallhaven-{}", file_name).as_str());
-
-                self.images.push(Image::new(thumbnail, source));
-            }
-        }
+    if let Some(spider) = spider {
+        spider.crawl(query).await;
+        let images = spider.get_images()?;
+        return Ok(images);
     }
 
-    fn name(&self) -> String {
-        return String::from("wallhaven");
-    }
+    Err(WallPapaerError::UnknownImageSource(query.source.to_owned()).into())
+}
 
-    fn new() -> Wallhaven {
-        Wallhaven { images: vec![] }
-    }
+pub async fn get_all_sources() -> Result<Vec<String>> {
+    let sources: Vec<String> = SPIDERS.keys().map(|key| key.to_owned()).collect();
+    Ok(sources)
+    // Err(WallPapaerError::DoesNotHaveAnyImageSource.into())
 }

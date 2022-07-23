@@ -1,5 +1,7 @@
 import { createApp } from "vue";
 import App from "./App.vue";
+import ElementPlus from "element-plus";
+import "element-plus/dist/index.css";
 import VueLazyLoad from "vue-lazyload";
 import { isRegistered, register } from "@tauri-apps/api/globalShortcut";
 // import { invoke } from "@tauri-apps/api";
@@ -30,5 +32,7 @@ app.use(VueLazyLoad, {
   loading: loadingImage,
   attempt: 1,
 });
+
+app.use(ElementPlus);
 
 app.mount("#app");

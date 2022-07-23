@@ -1,15 +1,21 @@
 <template>
   <div class="query-container">
-    <select name="source" class="select-source">
-      <option class="source-option" value="wallhaven">wallhaven</option>
-    </select>
-    <input
+    <el-select size="default" placeholder="搜索源" v-model="query.source">
+      <el-option
+        v-for="(source, index) in sources"
+        :key="index"
+        :value="source"
+        :label="source"
+      ></el-option>
+    </el-select>
+    <el-input
       class="input-text"
-      type="text"
-      placeholder="请输入关键字"
       v-model="query.keyword"
+      placeholder="请输入关键字"
       @keyup.enter="handleQuery"
-    />
+      :prefix-icon="Search"
+      clearable
+    ></el-input>
     <button type="button" class="search-btn" @click="handleQuery">
       <img src="../assets/search.png" alt="../assets/image.png" />
       搜索
@@ -109,17 +115,21 @@
 import {
   getCurrentInstance,
   onMounted,
+  onBeforeMount,
   reactive,
   toRefs,
 } from "@vue/runtime-core";
 import { invoke } from "@tauri-apps/api";
+import { Search } from "@element-plus/icons-vue";
+import { ElNotification } from "element-plus";
 export default {
   name: "ImageGallery",
   setup() {
     const instance = getCurrentInstance();
     const dataMap = reactive({
-      query: { page: 1, keyword: "" },
+      query: { page: 1, keyword: "", source: "" },
       images: [],
+      sources: [],
       currentImage: null,
       contextMenuShow: false,
       loading: false,
@@ -145,9 +155,17 @@ export default {
           const { source } = currentImage;
           const local_path = await invoke("download_image", { source });
           console.log(local_path);
-          alert("下载成功");
+          ElNotification({
+            title: "提醒",
+            message: "图片下载成功！",
+            type: "success",
+          });
         } else {
-          alert("请选择图片");
+          ElNotification({
+            title: "错误",
+            message: "下载图片失败！",
+            type: "error",
+          });
         }
         dataMap.contextMenuShow = false;
       },
@@ -171,21 +189,28 @@ export default {
       },
     });
 
+    onBeforeMount(async () => {});
+
     onMounted(async () => {
+      const sources = await invoke("get_image_sources");
+      dataMap.sources = sources;
+      if (sources.length > 0) dataMap.query.source = sources[0];
+
       const response = await invoke("get_images", dataMap.query);
       dataMap.images.push({ page: 1, items: response });
 
       invoke("close_splashscreen");
 
       window.addEventListener("scroll", async () => {
-        if (dataMap.loading && !dataMap.canLoadMore) return;
+        if (dataMap.loading) return;
 
         const windowHeight =
           document.documentElement.clientHeight || document.body.clientHeight;
         const scrollTop =
           document.documentElement.scrollTop || document.body.scrollTop;
-        const documentHeight =
-          document.documentElement.scrollHeight || document.body.scrollHeight;
+        const documentHeight = document.body.scrollHeight;
+
+        console.log(windowHeight, scrollTop, documentHeight);
 
         if (windowHeight + scrollTop >= documentHeight) {
           dataMap.loading = true;
@@ -218,12 +243,17 @@ export default {
           thumbnail: dataMap.currentImage.thumbnail,
         });
         console.log(response);
-        alert("设置成功");
+        ElNotification({
+          title: "提醒",
+          message: "背景设置成功！",
+          type: "success",
+        });
       }
     };
     return {
       ...toRefs(dataMap),
       setBackground,
+      Search,
     };
   },
 };
@@ -320,7 +350,6 @@ export default {
 }
 
 .input-text {
-  width: 200px;
   height: 30px;
   border: none;
   padding: 0 10px;
@@ -401,5 +430,14 @@ export default {
 }
 .empty-container img {
   width: 150px;
+}
+</style>
+
+<style>
+/**
+* 这里是修改自定义的样式，select的高度比input高了2px
+*/
+.el-input.el-input--default.el-input--suffix {
+  height: 30px;
 }
 </style>

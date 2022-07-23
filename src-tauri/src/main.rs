@@ -3,18 +3,10 @@
     windows_subsystem = "windows"
 )]
 
-#[macro_use]
-extern crate lazy_static;
-
-use app::{utils, Image, ImageQuery, Spider, Wallhaven};
+use app::{utils, Image, ImageQuery};
 use rand::Rng;
-use std::{collections::HashMap, sync::Mutex};
 use tauri::Manager;
 use tauri::{CustomMenuItem, SystemTray, SystemTrayEvent, SystemTrayMenu, SystemTrayMenuItem};
-
-lazy_static! {
-    static ref IMAGES: Mutex<HashMap<String, Vec<Image>>> = Mutex::new(HashMap::new());
-}
 
 fn main() {
     let tray = SystemTray::new();
@@ -92,7 +84,8 @@ fn main() {
             close_splashscreen,
             get_images,
             set_background,
-            download_image
+            download_image,
+            get_image_sources
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
@@ -122,15 +115,9 @@ async fn close_splashscreen(window: tauri::Window) {
 }
 
 #[tauri::command]
-async fn get_images(page: u8, keyword: String) -> Vec<Image> {
-    let mut spider = Wallhaven::new();
-
-    // todo: use a cache to avoid querying the same page twice
-    // if IMAGES.lock().unwrap().contains_key(&spider.name()) {
-    //     return IMAGES.lock().unwrap()[&spider.name()].clone();
-    // }
-
+async fn get_images(source: String, page: u8, keyword: String) -> Vec<Image> {
     let query = ImageQuery {
+        source,
         keyword,
         page,
         tags: None,
@@ -138,20 +125,12 @@ async fn get_images(page: u8, keyword: String) -> Vec<Image> {
 
     println!("query: {query:?} crawl...");
 
-    spider.crawl(query).await;
+    let images = app::get_images(&query).await;
+    if let Ok(images) = images {
+        return images;
+    }
 
-    // push to static IMAGES
-    // let mut images = IMAGES.lock().unwrap();
-    // if images.contains_key(&spider.name()) {
-    //     images
-    //         .get_mut(&spider.name())
-    //         .unwrap()
-    //         .append(&mut spider.images.clone());
-    // } else {
-    //     images.insert(spider.name().clone(), spider.images.clone());
-    // }
-    println!("{:?}", &spider.images);
-    spider.images
+    return vec![];
 }
 
 #[tauri::command]
@@ -170,4 +149,12 @@ async fn set_background(source: String, thumbnail: String) -> bool {
     image.set_background().unwrap();
     println!("OK!");
     true
+}
+
+#[tauri::command]
+async fn get_image_sources() -> Vec<String> {
+    if let Ok(sources) = app::get_all_sources().await {
+        return sources;
+    }
+    return vec![];
 }
