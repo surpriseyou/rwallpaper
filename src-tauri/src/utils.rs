@@ -1,7 +1,7 @@
 /*
  * @Author: mty
  * @Date: 2022-07-12 18:59:34
- * @LastEditTime: 2022-07-19 19:51:46
+ * @LastEditTime: 2022-07-30 20:36:03
  * @LastEditors: anonymous
  * @Description:
  * @FilePath: \rwallpaper\src-tauri\src\utils.rs
@@ -57,8 +57,11 @@ pub fn set_background(image_path: &str) -> Result<()> {
         return Err(WallPapaerError::FileNotExists(image_path.to_owned()).into());
     }
 
+    // get image file meta data
+    // let meta = std::fs::metadata(image_path).unwrap();
+
     wallpaper::set_from_path(image_path).unwrap();
-    wallpaper::set_mode(wallpaper::Mode::Stretch).unwrap();
+    wallpaper::set_mode(wallpaper::Mode::Crop).unwrap();
     Ok(())
 }
 

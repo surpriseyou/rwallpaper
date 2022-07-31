@@ -1,7 +1,7 @@
 /*
  * @Author: mty
  * @Date: 2022-07-23 10:21:49
- * @LastEditTime: 2022-07-23 14:38:49
+ * @LastEditTime: 2022-07-23 20:16:37
  * @LastEditors: anonymous
  * @Description: wallhaven spider
  * @FilePath: \rwallpaper\src-tauri\src\spiders\wallhaven.rs

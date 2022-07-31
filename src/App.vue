@@ -1,5 +1,6 @@
 <template>
   <image-gallery> </image-gallery>
+  <el-backtop :right="20" :bottom="20" :visibility-height="300" />
 </template>
 
 <script>

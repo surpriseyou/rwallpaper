@@ -1,7 +1,7 @@
 /*
  * @Author: mty
  * @Date: 2022-07-12 16:57:15
- * @LastEditTime: 2022-07-23 14:38:00
+ * @LastEditTime: 2022-07-23 22:01:31
  * @LastEditors: anonymous
  * @Description:
  * @FilePath: \rwallpaper\src-tauri\src\lib.rs
@@ -20,7 +20,7 @@ use serde::Deserialize;
 use serde::Serialize;
 use std::collections::HashMap;
 
-use spiders::Spider;
+pub use spiders::Spider;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct ImageQuery {
@@ -92,6 +92,8 @@ impl Image {
         utils::set_background(&self.local_path)
     }
 }
+
+unsafe impl Sync for Image {}
 
 lazy_static! {
     static ref SPIDERS: HashMap<String, Box<dyn Spider + Sync>> = {

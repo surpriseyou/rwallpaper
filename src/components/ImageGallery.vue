@@ -1,6 +1,11 @@
 <template>
   <div class="query-container">
-    <el-select size="default" placeholder="搜索源" v-model="query.source">
+    <el-select
+      size="default"
+      placeholder="搜索源"
+      v-model="query.source"
+      @change="handleQuery"
+    >
       <el-option
         v-for="(source, index) in sources"
         :key="index"
