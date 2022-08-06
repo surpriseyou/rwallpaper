@@ -38,6 +38,7 @@
           v-lazy="image.thumbnail"
           alt=""
           @contextmenu="(e) => handleContextMenu(e, image)"
+          @click="handleImageClick(image)"
         />
       </div>
 
@@ -114,6 +115,9 @@
       </svg>
     </div>
   </div>
+  <el-dialog fullscreen="true" v-model="dialogVisible">
+    <img alt="" v-lazy="currentImage.source" style="width: 100%" />
+  </el-dialog>
 </template>
 
 <script>
@@ -140,6 +144,7 @@ export default {
       loading: false,
       canLoadMore: true, // 是否可以加载更多, 如果一次获取图片少于“pageSize”张, 就不能加载更多, 反之可以加载更多
       pageSize: 24, // 每页显示的图片数量
+      dialogVisible: false,
       handleContextMenu: async (e, image) => {
         e.preventDefault();
 
@@ -191,6 +196,10 @@ export default {
         }
 
         dataMap.loading = false;
+      },
+      handleImageClick: (image) => {
+        dataMap.dialogVisible = true;
+        dataMap.currentImage = image;
       },
     });
 
